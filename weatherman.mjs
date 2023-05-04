@@ -1,0 +1,129 @@
+import fetch from "node-fetch"
+import blessed from "blessed"
+import dayjs from "dayjs"
+import { readFile } from "node:fs/promises"
+import { join } from "node:path"
+
+const XDG = process.env.XDG_CONFIG_HOME || join(process.env.HOME, ".config")
+const RCROOT = join(XDG, "weatherman")
+const RCFILE = join(RCROOT, "weatherman.json")
+
+const defaults = {
+  interval: 300,
+  locations: [
+    ["Pripyat Ukraine", "Pripyat"],
+  ],
+}
+
+const mkconf = async ()=> {
+  try {
+    const raw = await readFile(RCFILE)
+    const rc = JSON.parse(raw)
+    return { ...defaults, ...rc }
+  } catch {
+    return { ...defaults }
+  }
+}
+
+const CONF = await mkconf()
+
+const mktxt =(txt)=> {
+  return `{center}${txt}{/center}`
+}
+const mkinfo =()=> {
+  const dt = dayjs().format("YY-M-D h:mma")
+  return `WEATHER REPORT{|}for ${dt}`
+}
+
+const report = async (loc, short=null)=> {
+  if (!short) short = loc
+  loc = loc.replace(/\s+/g, "+")
+  const res = await fetch(`https://wttr.in/~${loc}?0n`)
+  var txt = await res.text()
+  txt = txt.split("\n").slice(2)
+  txt.unshift(`${short}`)
+  return txt.join("\n")
+}
+
+// Create a screen object.
+var screen = blessed.screen({
+  smartCSR: true
+})
+
+screen.title = "weatherman"
+
+// Create a weatherBox perfectly centered horizontally and vertically.
+var weatherBox = blessed.box({
+  top: "0%+1",
+  left: "center",
+  width: "shrink",
+  height: "100%-2",
+  content: mktxt("WEATHER REPORT HERE"),
+  tags: true,
+})
+
+const infoBox = blessed.box({
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: 1,
+  content: mktxt("WEATHER REPORT"),
+  tags: true,
+})
+
+const statusBox = blessed.box({
+  bottom: 0,
+  left: 0,
+  width: "100%",
+  height: 1,
+  content: mktxt("BOOTING UP"),
+  tags: true,
+})
+
+// Append our weatherBox to the screen.
+screen.append(infoBox)
+screen.append(weatherBox)
+screen.append(statusBox)
+
+
+const update = async ()=> {
+  var data = []
+  var maxlen = 0
+  for (let x = 0; x < CONF.locations.length; x++) {
+    const loc = CONF.locations[x]
+    statusBox.setContent(mktxt(`UPDATING ${loc[1]}`))
+    screen.render()
+    const rep = await report(loc[0], loc[1])
+    rep.split("\n").forEach(ln=> {
+      maxlen = Math.max(maxlen, ln.length)
+    })
+    data.push(`\n${rep}`)
+  }
+  data = data.join("")
+  weatherBox.set
+  weatherBox.setContent(data)
+  statusBox.setContent("")
+  infoBox.setContent(mkinfo())
+  screen.render()
+}
+
+const loop = async ()=> {
+  await update()
+  setTimeout(loop, CONF.interval * 1000)
+}
+
+// If weatherBox is focused, handle `enter`/`return` and give us some more content.
+weatherBox.key("enter", function (ch, key) {
+  update()
+})
+
+// Quit on Escape, q, or Control-C.
+screen.key(["escape", "q", "C-c"], function (ch, key) {
+  return process.exit(0)
+})
+
+// Focus our element.
+weatherBox.focus()
+screen.render()
+
+await loop()
