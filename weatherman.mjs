@@ -38,11 +38,15 @@ const mkinfo =()=> {
 const report = async (loc, short=null)=> {
   if (!short) short = loc
   loc = loc.replace(/\s+/g, "+")
-  const res = await fetch(`https://wttr.in/~${loc}?0n`)
-  var txt = await res.text()
-  txt = txt.split("\n").slice(2)
-  txt.unshift(`${short}`)
-  return txt.join("\n")
+  try {
+    const res = await fetch(`https://wttr.in/~${loc}?0n`)
+    var txt = await res.text()
+    txt = txt.split("\n").slice(2)
+    txt.unshift(`${short}`)
+    return txt.join("\n")
+  } catch {
+    return null
+  }
 }
 
 // Create a screen object.
@@ -89,20 +93,29 @@ screen.append(statusBox)
 const update = async ()=> {
   var data = []
   var maxlen = 0
+  let failures = 0
   for (let x = 0; x < CONF.locations.length; x++) {
     const loc = CONF.locations[x]
     statusBox.setContent(mktxt(`UPDATING ${loc[1]}`))
     screen.render()
     const rep = await report(loc[0], loc[1])
-    rep.split("\n").forEach(ln=> {
-      maxlen = Math.max(maxlen, ln.length)
-    })
-    data.push(`\n${rep}`)
+    if (rep) {
+      rep.split("\n").forEach(ln=> {
+        maxlen = Math.max(maxlen, ln.length)
+      })
+      data.push(`\n${rep}`)
+    } else {
+      failures += 1
+    }
   }
   data = data.join("")
   weatherBox.set
   weatherBox.setContent(data)
-  statusBox.setContent("")
+  if (failures) {
+    statusBox.setContent(`Failed to update ${failures} locations`)
+  } else {
+    statusBox.setContent("")
+  }
   infoBox.setContent(mkinfo())
   screen.render()
 }
