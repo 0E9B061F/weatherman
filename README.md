@@ -1,4 +1,10 @@
-A simple console program to display updated weather information for one or more locations, using [wttr.in](https://wttr.in) as a backend. Weatherman is configured in `~/.config/weatherman/weatherman.json`. The configuration file will look something like this:
+A simple console program to display updated weather information for one or more locations, using [wttr.in](https://wttr.in) as a backend.
+
+![](./weatherman.png)
+
+# Configuration
+
+Weatherman is configured in `~/.config/weatherman/weatherman.json`. The configuration file will look something like this:
 
 ```json
 {
