@@ -1,6 +1,8 @@
 A simple console program to display updated weather information for one or more locations, using [wttr.in](https://wttr.in) as a backend.
 
-![](./weatherman.png)
+<p align="center">
+  <img src="weatherman.png">
+</p>
 
 # Configuration
 
