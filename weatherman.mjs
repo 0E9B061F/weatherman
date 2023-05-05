@@ -32,20 +32,41 @@ const mktxt =(txt)=> {
 }
 const mkinfo =()=> {
   const dt = dayjs().format("YY-M-D h:mma")
-  return `WEATHER REPORT{|}for ${dt}`
+  return ` WEATHER REPORT{|}for ${dt} `
+}
+
+async function fetchWithTimeout(resource, options = {}) {
+  const { timeout = 5000 } = options
+
+  const controller = new AbortController()
+  const id = setTimeout(() => controller.abort(), timeout)
+
+  const response = await fetch(resource, {
+    ...options,
+    signal: controller.signal
+  })
+  clearTimeout(id)
+
+  return response
 }
 
 const report = async (loc, short=null)=> {
   if (!short) short = loc
   loc = loc.replace(/\s+/g, "+")
+  let res
   try {
-    const res = await fetch(`https://wttr.in/~${loc}?0n`)
+    res = await fetchWithTimeout(`https://wttr.in/~${loc}?0n`)
+  } catch (e) {
+    return false
+  }
+  if (res.ok) {
     var txt = await res.text()
+    if (!txt.trim()) return false
     txt = txt.split("\n").slice(2)
     txt.unshift(`${short}`)
     return txt.join("\n")
-  } catch {
-    return null
+  } else {
+    return false
   }
 }
 
@@ -58,10 +79,10 @@ screen.title = "weatherman"
 
 // Create a weatherBox perfectly centered horizontally and vertically.
 var weatherBox = blessed.box({
-  top: "0%+1",
+  top: "center",
   left: "center",
   width: "shrink",
-  height: "100%-2",
+  height: "shrink",
   content: mktxt("WEATHER REPORT HERE"),
   tags: true,
 })
@@ -92,7 +113,6 @@ screen.append(statusBox)
 
 const update = async ()=> {
   var data = []
-  var maxlen = 0
   let failures = 0
   for (let x = 0; x < CONF.locations.length; x++) {
     const loc = CONF.locations[x]
@@ -100,16 +120,12 @@ const update = async ()=> {
     screen.render()
     const rep = await report(loc[0], loc[1])
     if (rep) {
-      rep.split("\n").forEach(ln=> {
-        maxlen = Math.max(maxlen, ln.length)
-      })
       data.push(`\n${rep}`)
     } else {
       failures += 1
     }
   }
   data = data.join("")
-  weatherBox.set
   weatherBox.setContent(data)
   if (failures) {
     statusBox.setContent(`Failed to update ${failures} locations`)
