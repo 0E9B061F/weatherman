@@ -21,3 +21,7 @@ Weatherman is configured in `~/.config/weatherman/weatherman.json`. The configur
 `locations` are given as an array of two strings. The first is the full location query, the second is a short name used to display the location.
 
 `interval` is given in seconds and represents the time between updates.
+
+# Controls
+
+Press `q` or `Esc` to exit the program. Pressing `Enter` will force an update.
