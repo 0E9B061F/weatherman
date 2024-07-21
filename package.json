@@ -1,6 +1,6 @@
 {
   "name": "weatherman",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Display realtime weather on the command line",
   "type": "module",
   "exports": "./weatherman.mjs",
@@ -18,7 +18,7 @@
   "license": "MIT",
   "dependencies": {
     "blessed": "^0.1.81",
-    "dayjs": "^1.11.7",
-    "node-fetch": "^3.3.1"
+    "dayjs": "^1.11.12",
+    "node-fetch": "^3.3.2"
   }
 }
