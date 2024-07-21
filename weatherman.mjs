@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import fetch from "node-fetch"
 import blessed from "blessed"
 import dayjs from "dayjs"

@@ -1,6 +1,6 @@
 {
   "name": "weatherman",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Display realtime weather on the command line",
   "type": "module",
   "exports": "./weatherman.mjs",
